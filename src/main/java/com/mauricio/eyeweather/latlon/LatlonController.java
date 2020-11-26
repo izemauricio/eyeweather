@@ -48,72 +48,94 @@ public class LatlonController {
 	@RequestMapping(value = "/users/{userid}/locations", produces = MediaType.APPLICATION_JSON_VALUE, method = RequestMethod.GET)
 	@ResponseBody
 	public ArrayList<Card> get(@ModelAttribute User user, @PathVariable String userid) {
-		if (user.getId() == null) {
-			return new ArrayList<Card>();
-		} else {
-			if (!user.getId().equals(userid)) {
+		try {
+			if (user.getId() == null) {
 				return new ArrayList<Card>();
+			} else {
+				if (!user.getId().equals(userid)) {
+
+					return new ArrayList<Card>();
+				}
 			}
+
+			ArrayList<Card> the20cards = cardService.get20FirstCards(userid);
+			return the20cards;
+		} catch (Exception e) {
+			System.out.println("ERROR: " + e.getMessage());
 		}
 
-		return cardService.get20FirstCards(userid);
+		return new ArrayList<Card>();
 	}
 
 	@RequestMapping(value = "/users/{userid}/locations", produces = MediaType.APPLICATION_JSON_VALUE, method = RequestMethod.POST)
 	@ResponseBody
-	public ArrayList<Card> post(@ModelAttribute User user, @PathVariable String userid, @RequestParam String lat, @RequestParam String lon) {
-		Card card = new Card();
-
+	public ArrayList<Card> post(@ModelAttribute User user, @PathVariable String userid, @RequestParam String lat,
+			@RequestParam String lon) {
+		// return null if user id is not null and if user id is not different that
+		// logged
 		if (user.getId() == null) {
+			System.out.println(" User.id == null");
 			return new ArrayList<Card>();
 		} else {
 			if (!user.getId().equals(userid)) {
+				System.out.println(" User.id != request.id");
 				return new ArrayList<Card>();
 			}
 		}
 
+		Card card = new Card();
 		Address address = null;
 		Weather weather = null;
 
 		try {
 			weather = weatherService.getWeather(lat, lon);
 		} catch (Exception e) {
+			System.out.println(" getWeather error");
 		}
 
 		try {
 			address = addressService.getAddress(lat, lon);
 		} catch (Exception e) {
+			System.out.println(" getAddress error");
 		}
 
-		if (weather == null) {
-			card.setStatus("weather server error, please try again. Please try again.");
-			System.out.println("Weather Server Error!");
-		} else if (address == null) {
-			card.setStatus("google server error, please try again.");
-			System.out.println("Google Server Error! Please try again.");
-		} else {
-			Date dateDate = Calendar.getInstance().getTime();
+		try {
+			if (weather == null) {
+				System.out.println(" Weather obj is null");
+				card.setStatus("weather server error, please try again. Please try again.");
+			} else if (address == null) {
+				System.out.println(" Address obj is null");
+				card.setStatus("address server error, please try again.");
+			} else {
 
-			DateFormat df = new SimpleDateFormat("MM/dd/yyyy HH:mm:ss");
-			String dateString = df.format(dateDate);
+				// Adiciona card no banco do user
+				Date dateDate = Calendar.getInstance().getTime();
+				DateFormat df = new SimpleDateFormat("MM/dd/yyyy HH:mm:ss");
+				String dateString = df.format(dateDate);
 
-			card.setCardid(UUID.randomUUID().toString());
-			card.setUserid(userid);
-			card.setWeather(weather);
-			card.setAddress(address);
-			card.setDateDate(dateDate);
-			card.setDateString(dateString);
-			card.setStatus("ok");
+				card.setCardid(UUID.randomUUID().toString());
+				card.setUserid(userid);
+				card.setWeather(weather);
+				card.setAddress(address);
+				card.setDateDate(dateDate);
+				card.setDateString(dateString);
+				card.setStatus("ok");
 
-			cardService.addCard(userid, card);
+				cardService.addCard(userid, card);
+			}
+		} catch (Exception e) {
+			System.out.println(" Database add error");
 		}
 
-		return cardService.get20FirstCards(userid);
+		ArrayList<Card> the20cards = cardService.get20FirstCards(userid);
+
+		return the20cards;
 	}
 
 	@RequestMapping(value = "/users/{userid}/locations/{weatherid}", produces = MediaType.APPLICATION_JSON_VALUE, method = RequestMethod.DELETE)
 	@ResponseBody
-	public ArrayList<Card> delete(@ModelAttribute User user, @PathVariable String userid, @PathVariable String weatherid) {
+	public ArrayList<Card> delete(@ModelAttribute User user, @PathVariable String userid,
+			@PathVariable String weatherid) {
 		if (user.getId() == null) {
 			return new ArrayList<Card>();
 		} else {
