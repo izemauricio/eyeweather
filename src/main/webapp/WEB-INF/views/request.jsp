@@ -170,7 +170,7 @@
 				<div class="collapse navbar-collapse" id="bs-example-navbar-collapse-1">
 					<ul class="nav navbar-nav navbar-right">
 						<li><a href="#">Welcome ${user.username}</a></li>
-						<li><a href="/eyeweather/logout">Logout</a></li>
+						<li><a href="logout">Logout</a></li>
 					</ul>
 				</div>
 			</div>
